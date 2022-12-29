@@ -14,13 +14,13 @@ String last_serial_data = "";
 
 /* mode */
 uint8_t mode = 0;
-const uint8_t MAX_MODE = 16;
+const uint8_t MAX_MODE = 18;
 /*
  *  0: COM1  MHz |  1: COM1  KHz |  2: COM2  MHz |  3: COM2  KHz
  *  4: NAV1  MHz |  5: NAV1  KHz |  6: NAV2  MHz |  7: NAV2  KHz
  *  8: ADF   100 |  9: ADF   010 | 10: ADF   001 | 11: ADF   DEC
  * 12: DME  SWAP | 13: XPDR 1000 | 14: XPDR 0100 | 14: XPDR 0010
- * 16: XPDR 0001 |
+ * 16: XPDR 0001 | 17: AP ALT    | 18: AP VS     | 19: AP HDG
  */
 
 /* clear the LCD screen */
@@ -74,6 +74,11 @@ void blink_mode()
     else if (mode == 15) lcd_blink(8, 1);
     else if (mode == 16) lcd_blink(9, 1);
 
+    /* AP ALT */
+    else if (mode == 17) lcd_blink(4, 1);
+
+    /* AP VS */
+    else if (mode == 18) lcd_blink(4, 1);
 }
 
 /* buttons*/
@@ -102,13 +107,19 @@ void btn_up()
     else if (mode == 11) Serial.println("ADF_DECUP");
 
     /* DME */
-    else if (mode == 12) /* DME selected -> pass */;
+    else if (mode == 12) Serial.println("DME_TGL");
 
     /* XPDR */
     else if (mode == 13) Serial.println("XPDR_1000UP");
     else if (mode == 14) Serial.println("XPDR_0100UP");
     else if (mode == 15) Serial.println("XPDR_0010UP");
     else if (mode == 16) Serial.println("XPDR_0001UP");
+
+    /* AP ALT */
+    else if (mode == 17) Serial.println("AP_ALT_UP");
+
+    /* AP VS */
+    else if (mode == 18) Serial.println("AP_VS_UP");
 }
 
 void btn_down()
@@ -136,25 +147,31 @@ void btn_down()
     else if (mode == 11) Serial.println("ADF_DECDN");
 
     /* DME */
-    else if (mode == 12) /* DME selected -> pass */;
+    else if (mode == 12) Serial.println("DME_TGL");
 
     /* XPDR */
     else if (mode == 13) Serial.println("XPDR_1000DN");
     else if (mode == 14) Serial.println("XPDR_0100DN");
     else if (mode == 15) Serial.println("XPDR_0010DN");
     else if (mode == 16) Serial.println("XPDR_0001DN");
+
+    /* AP ALT */
+    else if (mode == 17) Serial.println("AP_ALT_DN");
+
+    /* AP VS */
+    else if (mode == 18) Serial.println("AP_VS_DN");
 }
 
 void btn_right()
 {
-    Serial.println("MODE_UP");
-    mode = min(MAX_MODE, mode + 1);
+    mode = mode == MAX_MODE ? 0 : mode + 1;
+    Serial.println("MODE " + String(mode));
 }
 
 void btn_left()
 {
-    Serial.println("MODE_DN");
-    mode = max(0, mode - 1);
+    mode = mode == 0 ? MAX_MODE : mode - 1;
+    Serial.println("MODE " + String(mode));
 }
 
 void btn_select()
@@ -163,9 +180,11 @@ void btn_select()
     else if (mode <  4) Serial.println("COM2_SWP");
     else if (mode <  6) Serial.println("NAV1_SWP");
     else if (mode <  8) Serial.println("NAV2_SWP");
-    else if (mode < 12) /* ADF selected -> pass */;
+    else if (mode < 12) Serial.println("MODE " + String(mode = 12));
     else if (mode < 13) Serial.println("DME_TGL");
-    else if (mode < 17) /* XPDR selected -> pass */;
+    else if (mode < 17) Serial.println("MODE " + String(mode = 17));
+    else if (mode < 18) Serial.println("AP_ALT_H");
+    else if (mode < 19) /* Unused */;
 }
 
 /* read buttons */
@@ -191,9 +210,9 @@ void read_buttons()
 /* read from serial */
 void read_serial()
 {
-    if (Serial.available() < 1) return; /* Nothing to read */
-    String serial_data = Serial.readStringUntil('\n'); /* incoming text */
-    if (serial_data == last_serial_data) return; /* Nothing new received */
+    if (Serial.available() < 1) return;                /* Nothing to read */
+    String serial_data = Serial.readStringUntil('\n'); /* incoming text   */
+    if (serial_data == last_serial_data) return;       /* Nothing new     */
 
     /* if something new was received, display it */
 
@@ -257,7 +276,6 @@ void read_serial()
         lcd.print(serial_data.substring(5));
         lcd.print(" KT");
         last_serial_data = serial_data;
-        /* FIX CURSOR POSITION BUG ON MODE CHANGE */
 
     /* XPDR */
     } else if (mode < 17) {
@@ -266,9 +284,30 @@ void read_serial()
         lcd.print("XPDR: ");
         lcd.print(serial_data);
         last_serial_data = serial_data;
+
+    /* AP ALT */
+    } else if (mode < 18) {
+        lcd_clear();
+        lcd.setCursor(0, 0);
+        lcd.print("AUTOPILOT");
+        lcd.setCursor(0, 1);
+        lcd.print("ALT: ");
+        lcd.setCursor(5, 1);
+        lcd.print(serial_data);
+        last_serial_data = serial_data;
+
+    /* AP VS */
+    } else if (mode < 19) {
+        lcd_clear();
+        lcd.setCursor(0, 0);
+        lcd.print("AUTOPILOT");
+        lcd.setCursor(0, 1);
+        lcd.print("VS:  ");
+        lcd.setCursor(5, 1);
+        lcd.print(serial_data);
+        last_serial_data = serial_data;
     }
 }
-
 
 /* setup function */
 void setup()

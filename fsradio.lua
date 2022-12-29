@@ -7,7 +7,6 @@ handshake = 0
 
 -- operation mode
 mode = 0
-MAX_MODE = 16
 
 -- COM Port Setup
 file = io.open(port_file, "r")
@@ -47,103 +46,116 @@ end
 
 
 -- Get data from Arduino
-function get_serial_data(com_port, datastring, length)
-    -- MODE
-	if (string.find(datastring, "MODE_UP")) then
-		mode = math.min(MAX_MODE, mode + 1) -- Mode Up
-    elseif (string.find(datastring, "MODE_DN")) then
-		mode = math.max(0, mode - 1) -- Mode Down
+function get_serial_data(com_port, datastr, length)
+    -- Mode
+    if (string.find(datastr, "MODE")) then
+        mode = tonumber(string.sub(datastr, 6, string.len(datastr)))
 
     -- COM 1
-    elseif (string.find(datastring, "COM1_MUP")) then
+    elseif (string.find(datastr, "COM1_MUP")) then
 		ipc.control(65637, 0)   -- MHz Up
-    elseif (string.find(datastring, "COM1_MDN")) then
+    elseif (string.find(datastr, "COM1_MDN")) then
 		ipc.control(65636, 0)   -- MHz Down
-    elseif (string.find(datastring, "COM1_KUP")) then
+    elseif (string.find(datastr, "COM1_KUP")) then
 		ipc.control(65639, 0)   -- KHz Up
-    elseif (string.find(datastring, "COM1_KDN")) then
+    elseif (string.find(datastr, "COM1_KDN")) then
 		ipc.control(65638, 0)   -- KHz Down
-    elseif (string.find(datastring, "COM1_SWP")) then
+    elseif (string.find(datastr, "COM1_SWP")) then
 		ipc.control(66372, 0)   -- Standby Swap
 
     -- COM 2
-    elseif (string.find(datastring, "COM2_MUP")) then
+    elseif (string.find(datastr, "COM2_MUP")) then
 		ipc.control(66437, 0)   -- MHz Up
-    elseif (string.find(datastring, "COM2_MDN")) then
+    elseif (string.find(datastr, "COM2_MDN")) then
 		ipc.control(66436, 0)   -- MHz Down
-    elseif (string.find(datastring, "COM2_KUP")) then
+    elseif (string.find(datastr, "COM2_KUP")) then
 		ipc.control(66440, 0)   -- KHz Up
-    elseif (string.find(datastring, "COM2_KDN")) then
+    elseif (string.find(datastr, "COM2_KDN")) then
 		ipc.control(66438, 0)   -- KHz Down
-    elseif (string.find(datastring, "COM2_SWP")) then
+    elseif (string.find(datastr, "COM2_SWP")) then
 		ipc.control(66444, 0)   -- Standby Swap
 
     -- NAV 1
-    elseif (string.find(datastring, "NAV1_MUP")) then
+    elseif (string.find(datastr, "NAV1_MUP")) then
 		ipc.control(65641, 0)   -- MHz Up
-    elseif (string.find(datastring, "NAV1_MDN")) then
+    elseif (string.find(datastr, "NAV1_MDN")) then
 		ipc.control(65640, 0)   -- MHz Down
-    elseif (string.find(datastring, "NAV1_KUP")) then
+    elseif (string.find(datastr, "NAV1_KUP")) then
 		ipc.control(65643, 0)   -- KHz Up
-    elseif (string.find(datastring, "NAV1_KDN")) then
+    elseif (string.find(datastr, "NAV1_KDN")) then
 		ipc.control(65642, 0)   -- KHz Down
-    elseif (string.find(datastring, "NAV1_SWP")) then
+    elseif (string.find(datastr, "NAV1_SWP")) then
 		ipc.control(66448, 0)   -- Standby Swap
 
     -- NAV 2
-    elseif (string.find(datastring, "NAV2_MUP")) then
+    elseif (string.find(datastr, "NAV2_MUP")) then
 		ipc.control(65645, 0)   -- MHz Up
-    elseif (string.find(datastring, "NAV2_MDN")) then
+    elseif (string.find(datastr, "NAV2_MDN")) then
 		ipc.control(65644, 0)   -- MHz Down
-    elseif (string.find(datastring, "NAV2_KUP")) then
+    elseif (string.find(datastr, "NAV2_KUP")) then
 		ipc.control(65647, 0)   -- KHz Up
-    elseif (string.find(datastring, "NAV2_KDN")) then
+    elseif (string.find(datastr, "NAV2_KDN")) then
 		ipc.control(65646, 0)   -- KHz Down
-    elseif (string.find(datastring, "NAV2_SWP")) then
+    elseif (string.find(datastr, "NAV2_SWP")) then
 		ipc.control(66452, 0)   -- Standby Swap
 
     -- ADF
-    elseif (string.find(datastring, "ADF_100UP")) then
+    elseif (string.find(datastr, "ADF_100UP")) then
 		ipc.control(65648, 0)   -- 100 Up
-    elseif (string.find(datastring, "ADF_100DN")) then
+    elseif (string.find(datastr, "ADF_100DN")) then
 		ipc.control(65666, 0)   -- 100 Down
-    elseif (string.find(datastring, "ADF_010UP")) then
+    elseif (string.find(datastr, "ADF_010UP")) then
 		ipc.control(65649, 0)   -- 010 Up
-    elseif (string.find(datastring, "ADF_010DN")) then
+    elseif (string.find(datastr, "ADF_010DN")) then
 		ipc.control(65667, 0)   -- 010 Down
-    elseif (string.find(datastring, "ADF_001UP")) then
+    elseif (string.find(datastr, "ADF_001UP")) then
 		ipc.control(65650, 0)   -- 001 Up
-    elseif (string.find(datastring, "ADF_001DN")) then
+    elseif (string.find(datastr, "ADF_001DN")) then
 		ipc.control(65668, 0)   -- 001 Down
-    elseif (string.find(datastring, "ADF_DECUP")) then
+    elseif (string.find(datastr, "ADF_DECUP")) then
 		ipc.control(66454, 0)   -- DEC Up
-    elseif (string.find(datastring, "ADF_DECDN")) then
+    elseif (string.find(datastr, "ADF_DECDN")) then
 		ipc.control(66453, 0)   -- DEC Down
 
     -- DME
-    elseif (string.find(datastring, "DME_TGL")) then
+    elseif (string.find(datastr, "DME_TGL")) then
         ipc.control(65789 - ipc.readSD(0x378), 0) -- DME Toggle
 
     -- XPDR
-    elseif (string.find(datastring, "XPDR_1000UP")) then
+    elseif (string.find(datastr, "XPDR_1000UP")) then
 		ipc.control(65651, 0)   -- 1000 Up
-    elseif (string.find(datastring, "XPDR_1000DN")) then
+    elseif (string.find(datastr, "XPDR_1000DN")) then
 		ipc.control(66455, 0)   -- 1000 Down
-    elseif (string.find(datastring, "XPDR_0100UP")) then
+    elseif (string.find(datastr, "XPDR_0100UP")) then
 		ipc.control(65652, 0)   -- 0100 Up
-    elseif (string.find(datastring, "XPDR_0100DN")) then
+    elseif (string.find(datastr, "XPDR_0100DN")) then
 		ipc.control(66456, 0)   -- 0100 Down
-    elseif (string.find(datastring, "XPDR_0010UP")) then
+    elseif (string.find(datastr, "XPDR_0010UP")) then
 		ipc.control(65653, 0)   -- 0010 Up
-    elseif (string.find(datastring, "XPDR_0010DN")) then
+    elseif (string.find(datastr, "XPDR_0010DN")) then
 		ipc.control(66457, 0)   -- 0010 Down
-    elseif (string.find(datastring, "XPDR_0001UP")) then
+    elseif (string.find(datastr, "XPDR_0001UP")) then
 		ipc.control(65654, 0)   -- 0001 Up
-    elseif (string.find(datastring, "XPDR_0001DN")) then
+    elseif (string.find(datastr, "XPDR_0001DN")) then
 		ipc.control(66458, 0)   -- 0001 Down
+
+    -- AP ALT
+    elseif (string.find(datastr, "AP_ALT_UP")) then
+		ipc.control(65892, 0)   -- Autopilot altitude Up
+    elseif (string.find(datastr, "AP_ALT_DN")) then
+		ipc.control(65893, 0)   -- Autopilot altitude Down
+    elseif (string.find(datastr, "AP_ALT_H")) then
+		ipc.control(65726, 0)   -- Autopilot altitude Hold
+
+    -- AP VS
+    elseif (string.find(datastr, "AP_VS_UP")) then
+		ipc.control(65894, 0)   -- Autopilot vertical speed Up
+    elseif (string.find(datastr, "AP_VS_DN")) then
+		ipc.control(65895, 0)   -- Autopilot vertical speed Down
+
 	end
 
-    -- ipc.display(datastring.." "..mode)
+    ipc.display(datastr.." "..mode)
 end
 
 -- Send data to Arduino
@@ -186,7 +198,6 @@ function set_serial_data()
             dist = string.format("%03.1f", ipc.readSW(0x0306)/10)
             knots = string.format("%03d", ipc.readSW(0x0308)/10)
         end
-        -- FIX CURSOR POSITION BUG ON MODE CHANGE
                                       -- 01234567
         info = dme..dist..knots.."\n" -- ABB.BCCC
 
@@ -195,6 +206,18 @@ function set_serial_data()
         raw = string.format("%x", ipc.readSD(0x0354))
         info = string.sub(raw, -4).."\n"
 
+    -- AP ALT
+    elseif mode < 18 then
+        raw = ipc.readSD(0x07D4)/19976
+        round_nearest_100 = string.format("%05d", math.floor(raw/100+0.5)*100)
+        if ipc.readSD(0x07D0) == 1 then hm = "[HLD]" else hm = "[OFF]" end
+        info = round_nearest_100.." "..hm.."\n"
+
+    -- AP VS
+    elseif mode < 19 then
+        raw = ipc.readSD(0x07F2)
+        if raw >= 55636 then raw = raw - 65536 end -- deals with negative
+        info = string.format("%05d", raw).."\n"
     end
 
     -- ipc.display(info)

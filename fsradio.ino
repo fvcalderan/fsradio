@@ -8,19 +8,21 @@ LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 /* keypad */
 uint16_t last_btn = 1023;
 uint64_t last_millis;
+const uint16_t button_delay = 200;
 
 /* serial */
 String last_serial_data = "";
 
 /* mode */
 uint8_t mode = 0;
-const uint8_t MAX_MODE = 18;
+const uint8_t MAX_MODE = 23;
 /*
  *  0: COM1  MHz |  1: COM1  KHz |  2: COM2  MHz |  3: COM2  KHz
  *  4: NAV1  MHz |  5: NAV1  KHz |  6: NAV2  MHz |  7: NAV2  KHz
  *  8: ADF   100 |  9: ADF   010 | 10: ADF   001 | 11: ADF   DEC
  * 12: DME  SWAP | 13: XPDR 1000 | 14: XPDR 0100 | 14: XPDR 0010
  * 16: XPDR 0001 | 17: AP ALT    | 18: AP VS     | 19: AP HDG
+ * 20: NAV HLD   | 21: APR HLD   | 22: NAV MODE  | 23: MASTER
  */
 
 /* clear the LCD screen */
@@ -74,11 +76,9 @@ void blink_mode()
     else if (mode == 15) lcd_blink(8, 1);
     else if (mode == 16) lcd_blink(9, 1);
 
-    /* AP ALT */
-    else if (mode == 17) lcd_blink(4, 1);
-
-    /* AP VS */
-    else if (mode == 18) lcd_blink(4, 1);
+    /* AP */
+    else if (mode >= 17 && mode <= 22) lcd_blink(4, 1);
+    else if (mode == 23) lcd_blink(7, 1);
 }
 
 /* buttons*/
@@ -115,11 +115,14 @@ void btn_up()
     else if (mode == 15) Serial.println("XPDR_0010UP");
     else if (mode == 16) Serial.println("XPDR_0001UP");
 
-    /* AP ALT */
+    /* AP */
     else if (mode == 17) Serial.println("AP_ALT_UP");
-
-    /* AP VS */
     else if (mode == 18) Serial.println("AP_VS_UP");
+    else if (mode == 19) Serial.println("AP_HDG_UP");
+    else if (mode == 20) Serial.println("AP_NAV_HLD");
+    else if (mode == 21) Serial.println("AP_APR_HLD");
+    else if (mode == 22) Serial.println("AP_NAV_MOD");
+    else if (mode == 23) Serial.println("AP_MASTER");
 }
 
 void btn_down()
@@ -155,11 +158,14 @@ void btn_down()
     else if (mode == 15) Serial.println("XPDR_0010DN");
     else if (mode == 16) Serial.println("XPDR_0001DN");
 
-    /* AP ALT */
+    /* AP */
     else if (mode == 17) Serial.println("AP_ALT_DN");
-
-    /* AP VS */
     else if (mode == 18) Serial.println("AP_VS_DN");
+    else if (mode == 19) Serial.println("AP_HDG_DN");
+    else if (mode == 20) Serial.println("AP_NAV_HLD");
+    else if (mode == 21) Serial.println("AP_APR_HLD");
+    else if (mode == 22) Serial.println("AP_NAV_MOD");
+    else if (mode == 23) Serial.println("AP_MASTER");
 }
 
 void btn_right()
@@ -185,6 +191,11 @@ void btn_select()
     else if (mode < 17) Serial.println("MODE " + String(mode = 17));
     else if (mode < 18) Serial.println("AP_ALT_H");
     else if (mode < 19) /* Unused */;
+    else if (mode < 20) Serial.println("AP_HDG_H");
+    else if (mode < 21) Serial.println("AP_NAV_HLD");
+    else if (mode < 22) Serial.println("AP_APR_HLD");
+    else if (mode < 23) Serial.println("AP_NAV_MOD");
+    else if (mode < 24) Serial.println("AP_MASTER");
 }
 
 /* read buttons */
@@ -197,7 +208,7 @@ void read_buttons()
     if (abs(btn - last_btn) <= 50) return;
 
     /* avoid debounce */
-    if (current_millis - last_millis <= 200) return;
+    if (current_millis - last_millis <= button_delay) return;
     if      (btn <  90) btn_right();
     else if (btn < 200) btn_up();
     else if (btn < 400) btn_down();
@@ -221,7 +232,7 @@ void read_serial()
         lcd_clear();
         lcd.setCursor(0, 0);
         lcd.print("COM1: ");
-        lcd.print(serial_data);
+        lcd.print(serial_data.substring(2));
         lcd.setCursor(0, 1);
         lcd.print(" MHz  KHz");
         last_serial_data = serial_data;
@@ -231,7 +242,7 @@ void read_serial()
         lcd_clear();
         lcd.setCursor(0, 0);
         lcd.print("COM2: ");
-        lcd.print(serial_data);
+        lcd.print(serial_data.substring(2));
         lcd.setCursor(0, 1);
         lcd.print(" MHz  KHz");
         last_serial_data = serial_data;
@@ -241,7 +252,7 @@ void read_serial()
         lcd_clear();
         lcd.setCursor(0, 0);
         lcd.print("NAV1: ");
-        lcd.print(serial_data);
+        lcd.print(serial_data.substring(2));
         lcd.setCursor(0, 1);
         lcd.print(" MHz  KHz");
         last_serial_data = serial_data;
@@ -251,7 +262,7 @@ void read_serial()
         lcd_clear();
         lcd.setCursor(0, 0);
         lcd.print("NAV2: ");
-        lcd.print(serial_data);
+        lcd.print(serial_data.substring(2));
         lcd.setCursor(0, 1);
         lcd.print(" MHz  KHz");
         last_serial_data = serial_data;
@@ -304,6 +315,61 @@ void read_serial()
         lcd.setCursor(0, 1);
         lcd.print("VS:  ");
         lcd.setCursor(5, 1);
+        lcd.print(serial_data);
+        last_serial_data = serial_data;
+
+    /* AP HDG */
+    } else if (mode < 20) {
+        lcd_clear();
+        lcd.setCursor(0, 0);
+        lcd.print("AUTOPILOT");
+        lcd.setCursor(0, 1);
+        lcd.print("HDG: ");
+        lcd.setCursor(5, 1);
+        lcd.print(serial_data);
+        last_serial_data = serial_data;
+
+    /* AP NAV */
+    } else if (mode < 21) {
+        lcd_clear();
+        lcd.setCursor(0, 0);
+        lcd.print("AUTOPILOT");
+        lcd.setCursor(0, 1);
+        lcd.print("NAV: ");
+        lcd.setCursor(5, 1);
+        lcd.print(serial_data.substring(1));
+        last_serial_data = serial_data;
+
+    /* AP APR */
+    } else if (mode < 22) {
+        lcd_clear();
+        lcd.setCursor(0, 0);
+        lcd.print("AUTOPILOT");
+        lcd.setCursor(0, 1);
+        lcd.print("APR: ");
+        lcd.setCursor(5, 1);
+        lcd.print(serial_data.substring(1));
+        last_serial_data = serial_data;
+
+    /* AP NAV MOD */
+    } else if (mode < 23) {
+        lcd_clear();
+        lcd.setCursor(0, 0);
+        lcd.print("AUTOPILOT");
+        lcd.setCursor(0, 1);
+        lcd.print("MOD: ");
+        lcd.setCursor(5, 1);
+        lcd.print(serial_data);
+        last_serial_data = serial_data;
+
+    /* AP MASTER */
+    } else if (mode < 24) {
+        lcd_clear();
+        lcd.setCursor(0, 0);
+        lcd.print("AUTOPILOT");
+        lcd.setCursor(0, 1);
+        lcd.print("MASTER: ");
+        lcd.setCursor(8, 1);
         lcd.print(serial_data);
         last_serial_data = serial_data;
     }

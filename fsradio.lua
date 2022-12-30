@@ -153,9 +153,33 @@ function get_serial_data(com_port, datastr, length)
     elseif (string.find(datastr, "AP_VS_DN")) then
 		ipc.control(65895, 0)   -- Autopilot vertical speed Down
 
+    -- AP HDG
+    elseif (string.find(datastr, "AP_HDG_UP")) then
+		ipc.control(65879, 0)   -- Autopilot heading Up
+    elseif (string.find(datastr, "AP_HDG_DN")) then
+		ipc.control(65880, 0)   -- Autopilot heading Down
+    elseif (string.find(datastr, "AP_HDG_H")) then
+		ipc.control(65725, 0)   -- Autopilot heading Hold
+
+    -- AP NAV
+    elseif (string.find(datastr, "AP_NAV_HLD")) then
+		ipc.control(65729, 0)   -- Autopilot nav Hold
+
+    -- AP APR
+    elseif (string.find(datastr, "AP_APR_HLD")) then
+		ipc.control(65724, 0)   -- Autopilot approach Hold
+
+    -- AP NAV MOD
+    elseif (string.find(datastr, "AP_NAV_MOD")) then
+		ipc.control(66375, 0)   -- Autopilot nav mode Toggle
+
+    -- AP MASTER
+    elseif (string.find(datastr, "AP_MASTER")) then
+		ipc.control(65580, 0)   -- Autopilot master Toggle
+
 	end
 
-    ipc.display(datastr.." "..mode)
+    -- ipc.display(datastr.." "..mode)
 end
 
 -- Send data to Arduino
@@ -163,24 +187,24 @@ function set_serial_data()
     -- Choose which information to send
 
     -- COM 1
-    if mode < 2 then
+    if mode < 2 then -- "c1": update if coming from "c2"
         raw = string.sub(string.format("%x", ipc.readSD(0x311A)), -4)
-        info = "1"..string.sub(raw, 1, 2).."."..string.sub(raw, -2).."\n"
+        info = "c11"..string.sub(raw, 1, 2).."."..string.sub(raw, -2).."\n"
 
     -- COM 2
-    elseif mode < 4 then
+    elseif mode < 4 then -- "c2": update if coming from "c1"
         raw = string.sub(string.format("%x", ipc.readSD(0x311C)), -4)
-        info = "1"..string.sub(raw, 1, 2).."."..string.sub(raw, -2).."\n"
+        info = "c21"..string.sub(raw, 1, 2).."."..string.sub(raw, -2).."\n"
 
     -- NAV 1
-    elseif mode < 6 then
+    elseif mode < 6 then -- "n1": update if coming from "n2"
         raw = string.sub(string.format("%x", ipc.readSD(0x311E)), -4)
-        info = "1"..string.sub(raw, 1, 2).."."..string.sub(raw, -2).."\n"
+        info = "n11"..string.sub(raw, 1, 2).."."..string.sub(raw, -2).."\n"
 
     -- NAV 2
-    elseif mode < 8 then
+    elseif mode < 8 then -- "n2": update if coming from "n1"
         raw = string.sub(string.format("%x", ipc.readSD(0x3120)), -4)
-        info = "1"..string.sub(raw, 1, 2).."."..string.sub(raw, -2).."\n"
+        info = "n21"..string.sub(raw, 1, 2).."."..string.sub(raw, -2).."\n"
 
     -- ADF
     elseif mode < 12 then
@@ -210,7 +234,7 @@ function set_serial_data()
     elseif mode < 18 then
         raw = ipc.readSD(0x07D4)/19976
         round_nearest_100 = string.format("%05d", math.floor(raw/100+0.5)*100)
-        if ipc.readSD(0x07D0) == 1 then hm = "[HLD]" else hm = "[OFF]" end
+        if ipc.readSD(0x07D0) == 1 then hm = "HLD" else hm = "OFF" end
         info = round_nearest_100.." "..hm.."\n"
 
     -- AP VS
@@ -218,6 +242,34 @@ function set_serial_data()
         raw = ipc.readSD(0x07F2)
         if raw >= 55636 then raw = raw - 65536 end -- deals with negative
         info = string.format("%05d", raw).."\n"
+
+    -- AP HDG
+    elseif mode < 20 then
+        raw = math.floor(ipc.readSD(0x07CC)/182)
+        if raw == 0 then raw = 360 end
+        if ipc.readSD(0x07C8) == 1 then hm = "HLD" else hm = "OFF" end
+        info = string.format("%03d", raw).." "..hm.."\n"
+
+    -- AP NAV
+    elseif mode < 21 then -- "n": update if coming from "a"
+        if ipc.readSD(0x07C4) == 1 then hm = "nHLD" else hm = "nOFF" end
+        info = hm.."\n"
+
+    -- AP APR
+    elseif mode < 22 then -- "a": update of coming from "n"
+        if ipc.readSD(0x07FC) == 1 then hm = "aHLD" else hm = "aOFF" end
+        info = hm.."\n"
+
+    -- AP NAV MOD
+    elseif mode < 23 then
+        if ipc.readSD(0x132C) == 0 then hm = "NAV" else hm = "GPS" end
+        info = hm.."\n"
+
+    -- AP MASTER
+    elseif mode < 24 then
+        if ipc.readSD(0x07BC) == 0 then hm = "OFF" else hm = "ON" end
+        info = hm.."\n"
+
     end
 
     -- ipc.display(info)

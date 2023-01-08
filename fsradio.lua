@@ -1,4 +1,6 @@
---http://thegeekforge.com/2017/11/10/arduino-lua-fsuipc-tutorial-001_a/
+-- Thanks to thegeekforge.com for providing a working example of Arduino-FSUIPC
+-- serial communication. The example can be found in the URL below.
+-- http://thegeekforge.com/2017/11/10/arduino-lua-fsuipc-tutorial-001_a/
 
 -- COM info
 port_file = "fsradio_port.txt"
@@ -178,8 +180,6 @@ function get_serial_data(com_port, datastr, length)
 		ipc.control(65580, 0)   -- Autopilot master Toggle
 
 	end
-
-    -- ipc.display(datastr.." "..mode)
 end
 
 -- Send data to Arduino
@@ -271,8 +271,6 @@ function set_serial_data()
         info = hm.."\n"
 
     end
-
-    -- ipc.display(info)
 
     -- Send information
     com.write(com_port, info)

@@ -9,6 +9,7 @@ LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 uint16_t last_btn = 1023;
 uint64_t last_millis;
 const uint16_t button_delay = 200;
+uint8_t can_press = 1;
 
 /* serial */
 String last_serial_data = "";
@@ -209,13 +210,17 @@ void read_buttons()
 
     /* avoid debounce */
     if (current_millis - last_millis <= button_delay) return;
-    if      (btn <  90) btn_right();
-    else if (btn < 200) btn_up();
-    else if (btn < 400) btn_down();
-    else if (btn < 600) btn_left();
-    else if (btn < 800) btn_select();
-    last_btn = btn;
-    last_millis = current_millis;
+    if (can_press) {
+        can_press = 0;
+        if      (btn <  90) btn_right();
+        else if (btn < 200) btn_up();
+        else if (btn < 400) btn_down();
+        else if (btn < 600) btn_left();
+        else if (btn < 800) btn_select();
+        last_btn = btn;
+        last_millis = current_millis;
+    }
+    can_press = btn >= 800;
 }
 
 /* read from serial */
@@ -383,7 +388,7 @@ void setup()
     lcd.setCursor(0, 0);
     lcd.print("FVC FS2004 Radio");
     lcd.setCursor(0, 1);
-    lcd.print(" V1.0 [13/11/22]");
+    lcd.print(" V1.0 [09/01/23]");
     lcd_blink(0, 1);
 
     /* setup Serial port with USB baud rate */
